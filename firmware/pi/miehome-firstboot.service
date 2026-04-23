@@ -2,11 +2,11 @@
 Description=MIEI HOME First Boot Setup
 After=network-online.target
 Wants=network-online.target
-ConditionPathExists=!/etc/miehome/.firstboot_complete
+ConditionPathExists=!/etc/mieihome/.firstboot_complete
 
 [Service]
 Type=oneshot
-ExecStart=/opt/miehome/first_boot.sh
+ExecStart=/opt/mieihome/first_boot.sh
 RemainAfterExit=yes
 StandardOutput=journal+console
 StandardError=journal+console
