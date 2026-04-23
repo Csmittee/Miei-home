@@ -1,4 +1,4 @@
-name = "miehome-update-server"
+name = "mieihome-update-server"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
@@ -6,17 +6,17 @@ compatibility_flags = ["nodejs_compat"]
 # ── D1 Database ───────────────────────────────────────────────────────────────
 [[d1_databases]]
 binding = "DB"
-database_name = "miehome-db"
-database_id   = "7999c2c1-5364-43e1-bf84-2bf22b51aa7c"     # from: wrangler d1 create miehome-db
+database_name = "mieihome-db"
+database_id   = "7999c2c1-5364-43e1-bf84-2bf22b51aa7c"     # from: wrangler d1 create mieihome-db
 
 # ── R2 Bucket (firmware binary storage) ──────────────────────────────────────
 [[r2_buckets]]
 binding    = "FIRMWARE"
-bucket_name = "miehome-firmware"
+bucket_name = "mieihome-firmware"
 
 # ── Environment variables ─────────────────────────────────────────────────────
 [vars]
-R2_PUBLIC_URL = "https://firmware.miehome.io"  # your R2 public domain
+R2_PUBLIC_URL = "https://firmware.mieihome.io"  # your R2 public domain
 
 # ── Secrets (set via CLI — never in this file) ────────────────────────────────
 # wrangler secret put ADMIN_TOKEN
@@ -24,19 +24,19 @@ R2_PUBLIC_URL = "https://firmware.miehome.io"  # your R2 public domain
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 routes = [
-  { pattern = "updates.miehome.io/*", zone_name = "miehome.io" }
+  { pattern = "updates.mieihome.io/*", zone_name = "mieihome.io" }
 ]
 
 # ── Production environment ────────────────────────────────────────────────────
 [env.production]
-name = "miehome-update-server-prod"
+name = "mieihome-update-server-prod"
 routes = [
-  { pattern = "updates.miehome.io/*", zone_name = "miehome.io" }
+  { pattern = "updates.mieihome.io/*", zone_name = "mieihome.io" }
 ]
 
 # ── Staging environment (for testing before pushing to customers) ─────────────
 [env.staging]
-name = "miehome-update-server-staging"
+name = "mieihome-update-server-staging"
 routes = [
-  { pattern = "updates-staging.miehome.io/*", zone_name = "miehome.io" }
+  { pattern = "updates-staging.mieihome.io/*", zone_name = "mieihome.io" }
 ]
