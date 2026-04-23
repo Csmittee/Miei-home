@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "miehome-db"
-database_id   = "e44a37d7-5d74-4671-86ad-0c058cfef8fa"     # from: wrangler d1 create miehome-db
+database_id   = "7999c2c1-5364-43e1-bf84-2bf22b51aa7c"     # from: wrangler d1 create miehome-db
 
 # ── R2 Bucket (firmware binary storage) ──────────────────────────────────────
 [[r2_buckets]]
