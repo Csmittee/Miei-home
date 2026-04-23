@@ -15,7 +15,7 @@ esphome:
   name: ${device_id}
   friendly_name: ${device_name}
   project:
-    name: miehome.sensor
+    name: mieihome.sensor
     version: "1.0.0"
 
 esp8266:
@@ -37,18 +37,18 @@ mqtt:
   client_id: ${device_id}
 
   will_message:
-    topic: miehome/sensor/${device_id}/availability
+    topic: mieihome/sensor/${device_id}/availability
     payload: offline
     retain: true
 
   birth_message:
-    topic: miehome/sensor/${device_id}/availability
+    topic: mieihome/sensor/${device_id}/availability
     payload: online
     retain: true
 
   on_connect:
     - mqtt.publish:
-        topic: miehome/sensor/${device_id}/config
+        topic: mieihome/sensor/${device_id}/config
         payload: !lambda |-
           return "{\"id\":\"${device_id}\",\"name\":\"${device_name}\",\"room\":\"${room}\",\"type\":\"${sensor_type}\"}";
         retain: true
@@ -81,17 +81,17 @@ binary_sensor:
 
     on_press:
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/state
+          topic: mieihome/sensor/${device_id}/state
           payload: "ON"
           retain: true
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/alert
+          topic: mieihome/sensor/${device_id}/alert
           payload: !lambda |-
             return "{\"type\":\"motion\",\"device\":\"${device_id}\",\"room\":\"${room}\",\"ts\":" + to_string(millis()) + "}";
 
     on_release:
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/state
+          topic: mieihome/sensor/${device_id}/state
           payload: "OFF"
           retain: true
 
@@ -112,11 +112,11 @@ binary_sensor:
 
     on_press:
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/state
+          topic: mieihome/sensor/${device_id}/state
           payload: "LEAK"
           retain: true
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/alert
+          topic: mieihome/sensor/${device_id}/alert
           payload: !lambda |-
             return "{\"type\":\"leak\",\"device\":\"${device_id}\",\"room\":\"${room}\",\"CRITICAL\":true,\"ts\":" + to_string(millis()) + "}";
       # Alert fires repeatedly every 30s while leak persists
@@ -126,13 +126,13 @@ binary_sensor:
           then:
             - delay: 30s
             - mqtt.publish:
-                topic: miehome/sensor/${device_id}/alert
+                topic: mieihome/sensor/${device_id}/alert
                 payload: !lambda |-
                   return "{\"type\":\"leak\",\"device\":\"${device_id}\",\"CRITICAL\":true,\"repeat\":true}";
 
     on_release:
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/state
+          topic: mieihome/sensor/${device_id}/state
           payload: "CLEAR"
           retain: true
 
@@ -163,7 +163,7 @@ sensor:
       return clamp(percent, 0.0f, 100.0f);
     on_value:
       - mqtt.publish:
-          topic: miehome/sensor/${device_id}/value
+          topic: mieihome/sensor/${device_id}/value
           payload: !lambda return to_string((int)x);
           retain: true
       # Alert if too dry (below 20%)
@@ -172,7 +172,7 @@ sensor:
             lambda: return x < 20.0;
           then:
             - mqtt.publish:
-                topic: miehome/sensor/${device_id}/alert
+                topic: mieihome/sensor/${device_id}/alert
                 payload: !lambda |-
                   return "{\"type\":\"soil_dry\",\"device\":\"${device_id}\",\"room\":\"${room}\",\"value\":" + to_string((int)x) + "}";
 
