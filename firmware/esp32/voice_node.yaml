@@ -13,7 +13,7 @@ esphome:
   name: ${node_id}
   friendly_name: "${node_name} Voice Node"
   project:
-    name: miehome.voice_node
+    name: mieihome.voice_node
     version: "1.0.0"
   on_boot:
     priority: 600
@@ -61,25 +61,25 @@ mqtt:
   client_id: ${node_id}
 
   will_message:
-    topic: miehome/voice/${node_id}/availability
+    topic: mieihome/voice/${node_id}/availability
     payload: offline
     retain: true
 
   birth_message:
-    topic: miehome/voice/${node_id}/availability
+    topic: mieihome/voice/${node_id}/availability
     payload: online
     retain: true
 
   on_connect:
     - mqtt.publish:
-        topic: miehome/voice/${node_id}/config
+        topic: mieihome/voice/${node_id}/config
         payload: !lambda |-
           return "{\"id\":\"${node_id}\",\"name\":\"${node_name}\",\"room\":\"${room}\",\"type\":\"voice_node\"}";
         retain: true
 
   # Listen for TTS playback commands from Pi
   on_message:
-    - topic: miehome/voice/${node_id}/tts_play
+    - topic: mieihome/voice/${node_id}/tts_play
       then:
         - lambda: |-
             // Trigger speaker output — implemented via I2S DAC below
@@ -93,7 +93,7 @@ mqtt:
         - delay: 3s
         - light.turn_off: led_ring
 
-    - topic: miehome/voice/${node_id}/command
+    - topic: mieihome/voice/${node_id}/command
       then:
         - lambda: |-
             if (x == "listen") id(listening_mode).publish_state(true);
@@ -162,7 +162,7 @@ voice_assistant:
         brightness: 80%
         effect: "Pulse"
     - mqtt.publish:
-        topic: miehome/voice/${node_id}/wake
+        topic: mieihome/voice/${node_id}/wake
         payload: !lambda |-
           return "{\"node\":\"${node_id}\",\"room\":\"${room}\",\"ts\":" + to_string(millis()) + "}";
 
@@ -178,7 +178,7 @@ voice_assistant:
   on_stt_end:
     then:
       - mqtt.publish:
-          topic: miehome/voice/${node_id}/stt_result
+          topic: mieihome/voice/${node_id}/stt_result
           payload: !lambda return "{\"text\":\"" + x + "\",\"room\":\"${room}\"}";
       - light.turn_on:
           id: led_ring
@@ -199,7 +199,7 @@ voice_assistant:
     - delay: 2s
     - light.turn_off: led_ring
     - mqtt.publish:
-        topic: miehome/system/log
+        topic: mieihome/system/log
         payload: !lambda |-
           return "{\"device\":\"${node_id}\",\"error\":\"voice_assistant_error\"}";
 
@@ -245,7 +245,7 @@ sensor:
               lambda: return x > 80.0;
             then:
               - mqtt.publish:
-                  topic: miehome/system/log
+                  topic: mieihome/system/log
                   payload: !lambda |-
                     return "{\"device\":\"${node_id}\",\"warn\":\"high_temp\",\"temp\":" + to_string(x) + "}";
 
