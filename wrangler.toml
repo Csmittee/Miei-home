@@ -1,0 +1,42 @@
+name = "miehome-update-server"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── D1 Database ───────────────────────────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "miehome-db"
+database_id   = "PASTE-YOUR-D1-ID-HERE"     # from: wrangler d1 create miehome-db
+
+# ── R2 Bucket (firmware binary storage) ──────────────────────────────────────
+[[r2_buckets]]
+binding    = "FIRMWARE"
+bucket_name = "miehome-firmware"
+
+# ── Environment variables ─────────────────────────────────────────────────────
+[vars]
+R2_PUBLIC_URL = "https://firmware.miehome.io"  # your R2 public domain
+
+# ── Secrets (set via CLI — never in this file) ────────────────────────────────
+# wrangler secret put ADMIN_TOKEN
+# → paste a strong random token, keep it safe — used to auth admin endpoints
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+routes = [
+  { pattern = "updates.miehome.io/*", zone_name = "miehome.io" }
+]
+
+# ── Production environment ────────────────────────────────────────────────────
+[env.production]
+name = "miehome-update-server-prod"
+routes = [
+  { pattern = "updates.miehome.io/*", zone_name = "miehome.io" }
+]
+
+# ── Staging environment (for testing before pushing to customers) ─────────────
+[env.staging]
+name = "miehome-update-server-staging"
+routes = [
+  { pattern = "updates-staging.miehome.io/*", zone_name = "miehome.io" }
+]

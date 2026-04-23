@@ -1,0 +1,162 @@
+name: Build and Release Firmware
+
+on:
+  push:
+    tags:
+      - 'v*'           # Trigger on version tags: v1.0.1, v1.1.0, etc.
+  workflow_dispatch:   # Allow manual trigger from GitHub UI
+
+jobs:
+
+  # ── Build ESP32 firmware binaries ──────────────────────────────────────────
+  build-esp32:
+    name: Compile ESPHome firmware
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        firmware:
+          - name: sonoff_switch
+            yaml: firmware/esp32/sonoff_switch.yaml
+          - name: voice_node
+            yaml: firmware/esp32/voice_node.yaml
+          - name: sensor_pack
+            yaml: firmware/esp32/sensor_pack.yaml
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write ESPHome secrets
+        run: |
+          cat > firmware/esp32/secrets.yaml << EOF
+          wifi_ssid: "BUILD_PLACEHOLDER"
+          wifi_password: "BUILD_PLACEHOLDER"
+          ap_fallback_password: "miehome-setup"
+          mqtt_host: "192.168.1.1"
+          mqtt_user: "miehome"
+          mqtt_pass: "BUILD_PLACEHOLDER"
+          ota_password: "${{ secrets.OTA_PASSWORD }}"
+          api_password: "${{ secrets.API_PASSWORD }}"
+          EOF
+
+      - name: Build ${{ matrix.firmware.name }}
+        uses: esphome/build-action@v4
+        with:
+          yaml-file: ${{ matrix.firmware.yaml }}
+          version: latest
+
+      - name: Rename binary
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p dist/esp32
+          find . -name "*.bin" -path "*/build/*" | head -1 | \
+            xargs -I{} cp {} dist/esp32/${{ matrix.firmware.name }}-${VERSION}.bin
+          echo "Built: dist/esp32/${{ matrix.firmware.name }}-${VERSION}.bin"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.firmware.name }}-bin
+          path: dist/esp32/
+
+  # ── Package Pi firmware ────────────────────────────────────────────────────
+  build-pi:
+    name: Package Pi firmware
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package Pi scripts
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p dist/pi
+          tar -czf dist/pi/miehome-pi-${VERSION}.tar.gz \
+            firmware/pi/first_boot.sh \
+            firmware/pi/diagnostics_api.py \
+            firmware/pi/whisper_service.py \
+            firmware/pi/ota_server.py \
+            firmware/pi/miehome-firstboot.service \
+            docker-compose.yml
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pi-package
+          path: dist/pi/
+
+  # ── Upload to Cloudflare R2 + publish release ──────────────────────────────
+  publish:
+    name: Publish to Cloudflare
+    needs: [build-esp32, build-pi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Upload firmware to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+
+          # Upload ESP32 binaries
+          for bin in dist/*-bin/esp32/*.bin; do
+            filename=$(basename "$bin")
+            echo "Uploading esp32/${filename}..."
+            wrangler r2 object put miehome-firmware/esp32/${filename} \
+              --file="$bin" \
+              --content-type="application/octet-stream"
+          done
+
+          # Upload Pi package
+          for pkg in dist/pi-package/pi/*.tar.gz; do
+            filename=$(basename "$pkg")
+            echo "Uploading pi/${filename}..."
+            wrangler r2 object put miehome-firmware/pi/${filename} \
+              --file="$pkg" \
+              --content-type="application/gzip"
+          done
+
+      - name: Publish release manifest to D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+
+          # Build changelog from git log since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --oneline --no-merges | head -20)
+          else
+            CHANGELOG="Initial release"
+          fi
+
+          # POST to Worker admin endpoint to register the release
+          curl -X POST "https://updates.miehome.io/admin/release" \
+            -H "Authorization: Bearer ${{ secrets.MIEHOME_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"version\": \"${VERSION}\",
+              \"changelog\": $(echo "$CHANGELOG" | jq -Rs .),
+              \"components\": {
+                \"pi\":           { \"version\": \"${VERSION}\", \"url\": \"/firmware/pi/miehome-pi-${VERSION}.tar.gz\" },
+                \"esp32_switch\": { \"version\": \"${VERSION}\", \"url\": \"/firmware/esp32/sonoff_switch-${VERSION}.bin\" },
+                \"esp32_voice\":  { \"version\": \"${VERSION}\", \"url\": \"/firmware/esp32/voice_node-${VERSION}.bin\" },
+                \"esp32_sensor\": { \"version\": \"${VERSION}\", \"url\": \"/firmware/esp32/sensor_pack-${VERSION}.bin\" }
+              }
+            }"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/**/*.bin
+            dist/**/*.tar.gz
+          generate_release_notes: true
