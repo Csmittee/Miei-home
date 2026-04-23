@@ -7,13 +7,13 @@
 
 set -euo pipefail
 
-LOG="/var/log/miehome_firstboot.log"
-DONE_FLAG="/etc/miehome/.firstboot_complete"
-MIEHOME_DIR="/opt/miehome"
-DASHBOARD_DIR="/opt/miehome/dashboard"
-CONFIG_DIR="/etc/miehome"
+LOG="/var/log/mieihome_firstboot.log"
+DONE_FLAG="/etc/mieihome/.firstboot_complete"
+mieihome_DIR="/opt/mieihome"
+DASHBOARD_DIR="/opt/mieihome/dashboard"
+CONFIG_DIR="/etc/mieihome"
 DATA_DIR="/mnt/data"          # NVMe SSD mount point
-MQTT_USER="miehome"
+MQTT_USER="mieihome"
 MQTT_PASS="$(openssl rand -hex 16)"
 VERSION="1.0.0"
 
@@ -58,14 +58,14 @@ NVME_DEV=$(lsblk -dn -o NAME,TYPE | awk '$2=="disk" && $1 ~ /nvme/ {print "/dev/
 
 if [ -z "$NVME_DEV" ]; then
     echo "WARNING: No NVMe device found. Using SD card fallback (not recommended for production)."
-    DATA_DIR="/home/miehome/data"
+    DATA_DIR="/home/mieihome/data"
     mkdir -p "$DATA_DIR"
 else
     echo "Found NVMe: $NVME_DEV"
     # Format only if no filesystem present
     if ! blkid "$NVME_DEV" | grep -q ext4; then
         echo "Formatting $NVME_DEV as ext4..."
-        mkfs.ext4 -q -L miehome-data "$NVME_DEV"
+        mkfs.ext4 -q -L mieihome-data "$NVME_DEV"
     fi
     mkdir -p "$DATA_DIR"
     # Add to fstab if not already there
@@ -87,14 +87,14 @@ echo "[2/9] Done."
 # =============================================================================
 # STEP 3 — Create system user and directories
 # =============================================================================
-echo "[3/9] Creating miehome user and directories..."
+echo "[3/9] Creating mieihome user and directories..."
 
-if ! id "miehome" &>/dev/null; then
-    useradd -r -s /bin/false -d "$MIEHOME_DIR" miehome
+if ! id "mieihome" &>/dev/null; then
+    useradd -r -s /bin/false -d "$mieihome_DIR" mieihome
 fi
 
-mkdir -p "$MIEHOME_DIR" "$CONFIG_DIR" "$DASHBOARD_DIR"
-chown -R miehome:miehome "$MIEHOME_DIR" "$DATA_DIR"
+mkdir -p "$mieihome_DIR" "$CONFIG_DIR" "$DASHBOARD_DIR"
+chown -R mieihome:mieihome "$mieihome_DIR" "$DATA_DIR"
 
 echo "[3/9] Done."
 
@@ -106,7 +106,7 @@ echo "[4/9] Configuring Mosquitto MQTT broker..."
 # Create MQTT credentials
 mosquitto_passwd -c -b /etc/mosquitto/passwd "$MQTT_USER" "$MQTT_PASS"
 
-cat > /etc/mosquitto/conf.d/miehome.conf << EOF
+cat > /etc/mosquitto/conf.d/mieihome.conf << EOF
 listener 1883
 allow_anonymous false
 password_file /etc/mosquitto/passwd
@@ -152,7 +152,7 @@ echo "[5/9] Installing Frigate NVR..."
 # Install Docker (Frigate runs in Docker for dependency isolation)
 if ! command -v docker &>/dev/null; then
     curl -fsSL https://get.docker.com | sh
-    usermod -aG docker miehome
+    usermod -aG docker mieihome
 fi
 
 # Frigate config
@@ -163,7 +163,7 @@ mqtt:
   port: 1883
   user: $MQTT_USER
   password: $MQTT_PASS
-  topic_prefix: miehome/camera
+  topic_prefix: mieihome/camera
 
 database:
   path: $DATA_DIR/frigate/frigate.db
@@ -203,7 +203,7 @@ cameras: {}
 EOF
 
 # Docker compose for Frigate
-cat > "$MIEHOME_DIR/docker-compose.yml" << EOF
+cat > "$mieihome_DIR/docker-compose.yml" << EOF
 version: "3.9"
 services:
   frigate:
@@ -223,7 +223,7 @@ services:
       FRIGATE_RTSP_PASSWORD: ""
 EOF
 
-cd "$MIEHOME_DIR" && docker compose up -d frigate
+cd "$mieihome_DIR" && docker compose up -d frigate
 echo "[5/9] Done."
 
 # =============================================================================
@@ -231,8 +231,8 @@ echo "[5/9] Done."
 # =============================================================================
 echo "[6/9] Installing Whisper STT..."
 
-python3 -m venv "$MIEHOME_DIR/venv"
-source "$MIEHOME_DIR/venv/bin/activate"
+python3 -m venv "$mieihome_DIR/venv"
+source "$mieihome_DIR/venv/bin/activate"
 
 pip install -q \
     openai-whisper \
@@ -246,12 +246,12 @@ python3 -c "import whisper; whisper.load_model('small')"
 deactivate
 
 # Whisper MQTT bridge service
-cat > "$MIEHOME_DIR/whisper_service.py" << 'PYEOF'
+cat > "$mieihome_DIR/whisper_service.py" << 'PYEOF'
 #!/usr/bin/env python3
 """
 MIEI HOME — Whisper STT MQTT Bridge
-Listens for audio data on miehome/voice/+/audio_stream
-Transcribes and publishes result to miehome/voice/{node_id}/stt_result
+Listens for audio data on mieihome/voice/+/audio_stream
+Transcribes and publishes result to mieihome/voice/{node_id}/stt_result
 """
 import json, io, time, threading, configparser
 import paho.mqtt.client as mqtt
@@ -259,11 +259,11 @@ import whisper
 import numpy as np
 
 config = configparser.ConfigParser()
-config.read('/etc/miehome/mqtt.conf')
+config.read('/etc/mieihome/mqtt.conf')
 
 MQTT_HOST = config.get('DEFAULT', 'MQTT_HOST', fallback='localhost')
 MQTT_PORT = int(config.get('DEFAULT', 'MQTT_PORT', fallback='1883'))
-MQTT_USER = config.get('DEFAULT', 'MQTT_USER', fallback='miehome')
+MQTT_USER = config.get('DEFAULT', 'MQTT_USER', fallback='mieihome')
 MQTT_PASS = config.get('DEFAULT', 'MQTT_PASS', fallback='')
 
 print("Loading Whisper model...")
@@ -272,7 +272,7 @@ print("Whisper ready.")
 
 def on_connect(client, userdata, flags, rc):
     print(f"MQTT connected (rc={rc})")
-    client.subscribe("miehome/voice/+/audio_stream")
+    client.subscribe("mieihome/voice/+/audio_stream")
 
 def on_message(client, userdata, msg):
     topic_parts = msg.topic.split("/")
@@ -283,7 +283,7 @@ def on_message(client, userdata, msg):
         text = result["text"].strip()
         if text:
             client.publish(
-                f"miehome/voice/{node_id}/stt_result",
+                f"mieihome/voice/{node_id}/stt_result",
                 json.dumps({"text": text, "timestamp": time.time()})
             )
             print(f"[{node_id}] STT: {text}")
@@ -298,10 +298,10 @@ client.connect(MQTT_HOST, MQTT_PORT, 60)
 client.loop_forever()
 PYEOF
 
-chmod +x "$MIEHOME_DIR/whisper_service.py"
+chmod +x "$mieihome_DIR/whisper_service.py"
 
 # Systemd service for Whisper
-cat > /etc/systemd/system/miehome-whisper.service << EOF
+cat > /etc/systemd/system/mieihome-whisper.service << EOF
 [Unit]
 Description=MIEI HOME Whisper STT Service
 After=network.target mosquitto.service
@@ -309,9 +309,9 @@ Requires=mosquitto.service
 
 [Service]
 Type=simple
-User=miehome
-WorkingDirectory=$MIEHOME_DIR
-ExecStart=$MIEHOME_DIR/venv/bin/python3 $MIEHOME_DIR/whisper_service.py
+User=mieihome
+WorkingDirectory=$mieihome_DIR
+ExecStart=$mieihome_DIR/venv/bin/python3 $mieihome_DIR/whisper_service.py
 Restart=on-failure
 RestartSec=10
 
@@ -319,7 +319,7 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-systemctl enable miehome-whisper
+systemctl enable mieihome-whisper
 echo "[6/9] Done."
 
 # =============================================================================
@@ -327,7 +327,7 @@ echo "[6/9] Done."
 # =============================================================================
 echo "[7/9] Setting up local OTA firmware server..."
 
-cat > "$MIEHOME_DIR/ota_server.py" << 'PYEOF'
+cat > "$mieihome_DIR/ota_server.py" << 'PYEOF'
 #!/usr/bin/env python3
 """
 MIEI HOME — Local OTA Firmware Server
@@ -340,11 +340,11 @@ import paho.mqtt.client as mqtt
 import configparser
 
 config = configparser.ConfigParser()
-config.read('/etc/miehome/mqtt.conf')
+config.read('/etc/mieihome/mqtt.conf')
 
 FIRMWARE_DIR = "/mnt/data/firmware"
-UPDATE_SERVER = "https://updates.miehome.io"   # your VPS
-CURRENT_VERSION_FILE = "/etc/miehome/version.json"
+UPDATE_SERVER = "https://updates.mieihome.io"   # your VPS
+CURRENT_VERSION_FILE = "/etc/mieihome/version.json"
 
 app = Flask(__name__)
 
@@ -381,15 +381,15 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
 PYEOF
 
-cat > /etc/systemd/system/miehome-ota.service << EOF
+cat > /etc/systemd/system/mieihome-ota.service << EOF
 [Unit]
 Description=MIEI HOME OTA Firmware Server
 After=network.target
 
 [Service]
 Type=simple
-User=miehome
-ExecStart=$MIEHOME_DIR/venv/bin/python3 $MIEHOME_DIR/ota_server.py
+User=mieihome
+ExecStart=$mieihome_DIR/venv/bin/python3 $mieihome_DIR/ota_server.py
 Restart=on-failure
 RestartSec=5
 
@@ -397,7 +397,7 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-systemctl enable miehome-ota
+systemctl enable mieihome-ota
 echo "[7/9] Done."
 
 # =============================================================================
@@ -405,14 +405,14 @@ echo "[7/9] Done."
 # =============================================================================
 echo "[8/9] Configuring Nginx..."
 
-cat > /etc/nginx/sites-available/miehome << 'EOF'
+cat > /etc/nginx/sites-available/mieihome << 'EOF'
 server {
     listen 80 default_server;
-    server_name miehome.local _;
+    server_name mieihome.local _;
 
     # Dashboard (setup wizard + main UI)
     location / {
-        root /opt/miehome/dashboard;
+        root /opt/mieihome/dashboard;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
@@ -438,7 +438,7 @@ server {
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/miehome /etc/nginx/sites-enabled/miehome
+ln -sf /etc/nginx/sites-available/mieihome /etc/nginx/sites-enabled/mieihome
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl enable nginx && systemctl restart nginx
 
@@ -506,7 +506,7 @@ mkdir -p "$(dirname $DONE_FLAG)"
 echo "$VERSION $(date -Iseconds)" > "$DONE_FLAG"
 
 # Start all services
-systemctl start miehome-whisper miehome-ota
+systemctl start mieihome-whisper mieihome-ota
 
 echo ""
 echo "First boot complete. Log saved to $LOG"
