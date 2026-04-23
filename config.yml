@@ -1,0 +1,214 @@
+# =============================================================================
+# MIEI HOME — Frigate NVR Configuration
+# Cameras: 3x Sonoff GK-200MP2-B
+# Storage: NVMe SSD mounted at /mnt/data
+# =============================================================================
+
+mqtt:
+  host: 127.0.0.1
+  port: 1883
+  user: mieihome
+  password: "{MQTT_PASS}"          # ← auto-filled by first_boot.sh
+  topic_prefix: mieihome/camera
+  client_id: frigate
+
+database:
+  path: /mnt/data/frigate/frigate.db
+
+# =============================================================================
+# Recording — 7 days rolling, all footage kept
+# Storage estimate: 3 cameras × ~10GB/day = ~210GB for 7 days
+# 512GB SSD gives comfortable headroom
+# =============================================================================
+record:
+  enabled: true
+  retain:
+    days: 7
+    mode: all               # keep all footage, not just motion
+  events:
+    retain:
+      default: 14           # keep event clips for 14 days
+      mode: motion          # only motion segments for events
+
+# =============================================================================
+# Snapshots — saved on motion/detection events
+# =============================================================================
+snapshots:
+  enabled: true
+  timestamp: true
+  bounding_box: true
+  retain:
+    default: 7              # keep snapshots 7 days
+
+# =============================================================================
+# Detection — CPU only, no GPU, no cloud
+# Pi 5 has 4 cores — we use 3 for detection, leave 1 for system
+# =============================================================================
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 3
+
+# =============================================================================
+# Objects to track
+# =============================================================================
+objects:
+  track:
+    - person
+    - car
+    - cat
+    - dog
+  filters:
+    person:
+      min_area: 5000        # ignore tiny detections (false positives)
+      max_area: 100000
+      threshold: 0.7        # 70% confidence minimum
+
+# =============================================================================
+# Detection resolution — lower = faster on Pi CPU
+# 1280x720 is the sweet spot for Pi 5
+# =============================================================================
+detect:
+  width: 1280
+  height: 720
+  fps: 5                    # 5fps for detection (recording stays full fps)
+
+# =============================================================================
+# Cameras
+# All 3x Sonoff GK-200MP2-B
+# RTSP enabled in eWeLink app, credentials: rtsp / 12345678
+# =============================================================================
+cameras:
+
+  # ── Camera 1 ───────────────────────────────────────────────────────────────
+  # Name this to match its physical location
+  front_door:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://rtsp:12345678@192.168.1.112:554/av_stream/ch0
+          roles:
+            - record
+            - detect
+        - path: rtsp://rtsp:12345678@192.168.1.112:554/av_stream/ch1
+          roles:
+            - rtsp             # sub-stream for live view (lower bandwidth)
+      hwaccel_args: []         # no GPU on Pi — CPU decode only
+      output_args:
+        record: -f segment -segment_time 60 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c copy
+
+    detect:
+      enabled: true
+      width: 1280
+      height: 720
+      fps: 5
+
+    record:
+      enabled: true
+
+    snapshots:
+      enabled: true
+
+    motion:
+      mask: []                 # add motion masks here if needed (e.g. busy road)
+
+    mqtt:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: true
+
+  # ── Camera 2 ───────────────────────────────────────────────────────────────
+  living_room:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://rtsp:12345678@192.168.1.113:554/av_stream/ch0
+          roles:
+            - record
+            - detect
+        - path: rtsp://rtsp:12345678@192.168.1.113:554/av_stream/ch1
+          roles:
+            - rtsp
+      hwaccel_args: []
+      output_args:
+        record: -f segment -segment_time 60 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c copy
+
+    detect:
+      enabled: true
+      width: 1280
+      height: 720
+      fps: 5
+
+    record:
+      enabled: true
+
+    snapshots:
+      enabled: true
+
+    motion:
+      mask: []
+
+    mqtt:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: true
+
+  # ── Camera 3 ───────────────────────────────────────────────────────────────
+  # This is the confirmed working camera (192.168.1.124)
+  garden:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://rtsp:12345678@192.168.1.124:554/av_stream/ch0
+          roles:
+            - record
+            - detect
+        - path: rtsp://rtsp:12345678@192.168.1.124:554/av_stream/ch1
+          roles:
+            - rtsp
+      hwaccel_args: []
+      output_args:
+        record: -f segment -segment_time 60 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c copy
+
+    detect:
+      enabled: true
+      width: 1280
+      height: 720
+      fps: 5
+
+    record:
+      enabled: true
+
+    snapshots:
+      enabled: true
+
+    motion:
+      mask: []
+
+    mqtt:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: true
+
+# =============================================================================
+# Storage paths — all on NVMe SSD
+# =============================================================================
+ffmpeg:
+  global_args: -hide_banner -loglevel warning
+  hwaccel_args: []
+
+# =============================================================================
+# Frigate+ / model — not used (no cloud, no subscription)
+# Using built-in CPU detector only
+# =============================================================================
+
+# =============================================================================
+# Live view
+# Accessible at http://mieihome.local/cameras/
+# =============================================================================
+live:
+  height: 720
+  quality: 8

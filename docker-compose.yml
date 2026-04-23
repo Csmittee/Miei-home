@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:stable
+    container_name: frigate
+    restart: unless-stopped
+    privileged: true
+    shm_size: "256mb"           # shared memory for video processing — 256MB for 3 cameras
+
+    volumes:
+      - /etc/mieihome/frigate/config.yml:/config/config.yml
+      - /mnt/data/frigate:/media/frigate   # NVMe SSD — all recordings go here
+      - /etc/localtime:/etc/localtime:ro
+
+    ports:
+      - "5000:5000"             # Frigate web UI
+      - "8554:8554"             # RTSP re-stream (for dashboard live view)
+      - "8555:8555/tcp"         # WebRTC
+      - "8555:8555/udp"         # WebRTC
+
+    environment:
+      FRIGATE_RTSP_PASSWORD: "12345678"
+
+    devices:
+      - /dev/bus/usb:/dev/bus/usb   # USB coral if added later — harmless if absent
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s         # give Frigate time to start up before health checks
