@@ -24,7 +24,7 @@ esphome:
   name: ${device_id}
   friendly_name: ${device_name}
   project:
-    name: miehome.sonoff_switch
+    name: mieihome.sonoff_switch
     version: "1.0.0"
 
 esp8266:                            # Sonoff Basic/Mini use ESP8266
@@ -53,19 +53,19 @@ mqtt:
 
   # Last Will — Pi knows instantly if device drops off
   will_message:
-    topic: miehome/devices/${device_id}/availability
+    topic: mieihome/devices/${device_id}/availability
     payload: offline
     retain: true
 
   birth_message:
-    topic: miehome/devices/${device_id}/availability
+    topic: mieihome/devices/${device_id}/availability
     payload: online
     retain: true
 
   # Announce device config to Pi on boot
   on_connect:
     - mqtt.publish:
-        topic: miehome/devices/${device_id}/config
+        topic: mieihome/devices/${device_id}/config
         payload: !lambda |-
           return "{\"id\":\"${device_id}\",\"name\":\"${device_name}\",\"room\":\"${room}\",\"type\":\"switch\"}";
         retain: true
@@ -101,12 +101,12 @@ switch:
     # Publish state to MQTT on every change
     on_turn_on:
       - mqtt.publish:
-          topic: miehome/devices/${device_id}/status
+          topic: mieihome/devices/${device_id}/status
           payload: "ON"
           retain: true
     on_turn_off:
       - mqtt.publish:
-          topic: miehome/devices/${device_id}/status
+          topic: mieihome/devices/${device_id}/status
           payload: "OFF"
           retain: true
 
@@ -115,7 +115,7 @@ switch:
 # ── Subscribe to commands from Pi ────────────────────────────────────────────
 mqtt:
   on_message:
-    - topic: miehome/devices/${device_id}/command
+    - topic: mieihome/devices/${device_id}/command
       then:
         - lambda: |-
             if (x == "ON")  id(relay).turn_on();
@@ -147,7 +147,7 @@ sensor:
     update_interval: 60s
     on_value:
       - mqtt.publish:
-          topic: miehome/devices/${device_id}/wifi_rssi
+          topic: mieihome/devices/${device_id}/wifi_rssi
           payload: !lambda return to_string((int)x);
 
   - platform: uptime
@@ -165,7 +165,7 @@ sensor:
   #     name: "${device_name} Current"
   #     on_value:
   #       - mqtt.publish:
-  #           topic: miehome/devices/${device_id}/current
+  #           topic: mieihome/devices/${device_id}/current
   #           payload: !lambda return to_string(x);
   #   voltage:
   #     name: "${device_name} Voltage"
@@ -173,7 +173,7 @@ sensor:
   #     name: "${device_name} Power"
   #     on_value:
   #       - mqtt.publish:
-  #           topic: miehome/devices/${device_id}/power_w
+  #           topic: mieihome/devices/${device_id}/power_w
   #           payload: !lambda return to_string(x);
 
 # ── Status LED ────────────────────────────────────────────────────────────────
