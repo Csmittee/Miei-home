@@ -85,7 +85,7 @@ async function handleVersionCheck(env) {
     components: JSON.parse(row.components),
     // components format:
     // {
-    //   "pi": { "version": "1.0.1", "url": "/firmware/pi/miehome-pi-1.0.1.tar.gz" },
+    //   "pi": { "version": "1.0.1", "url": "/firmware/pi/mieihome-pi-1.0.1.tar.gz" },
     //   "esp32_switch": { "version": "1.0.1", "url": "/firmware/esp32/sonoff_switch-1.0.1.bin" },
     //   "esp32_voice": { "version": "1.0.1", "url": "/firmware/esp32/voice_node-1.0.1.bin" },
     //   "esp32_sensor": { "version": "1.0.1", "url": "/firmware/esp32/sensor_pack-1.0.1.bin" }
@@ -120,7 +120,7 @@ async function handleFirmwareDownload(path, env) {
   );
 
   // Redirect to R2 public URL (set your R2 bucket as public or use signed URLs)
-  const r2BaseUrl = env.R2_PUBLIC_URL; // e.g. https://firmware.miehome.io
+  const r2BaseUrl = env.R2_PUBLIC_URL; // e.g. https://firmware.mieihome.io
   return Response.redirect(`${r2BaseUrl}/${r2Key}`, 302);
 }
 
