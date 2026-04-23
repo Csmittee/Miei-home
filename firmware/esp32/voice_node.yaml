@@ -1,0 +1,260 @@
+# =============================================================================
+# MIEI HOME — ESPHome: ESP32-S3 Voice Node
+# Hardware: ESP32-S3 N16R8 + INMP441 mic + MAX98357A speaker + WS2812B LEDs
+# One per room. Wake word runs on-device. Audio sent to Pi for Whisper STT.
+# =============================================================================
+
+substitutions:
+  node_id: "living_room_node"       # ← CHANGE THIS per node (no spaces)
+  node_name: "Living Room"
+  room: "living_room"
+
+esphome:
+  name: ${node_id}
+  friendly_name: "${node_name} Voice Node"
+  project:
+    name: miehome.voice_node
+    version: "1.0.0"
+  on_boot:
+    priority: 600
+    then:
+      - light.turn_on:
+          id: led_ring
+          red: 0%
+          green: 0%
+          blue: 20%
+          brightness: 30%
+      - delay: 2s
+      - light.turn_off: led_ring
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_SPIRAM_MODE_OCT: y      # Enable 8MB PSRAM
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+# ── WiFi ─────────────────────────────────────────────────────────────────────
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+
+  ap:
+    ssid: "MIEI-${node_id}"
+    password: !secret ap_fallback_password
+
+# ── MQTT ─────────────────────────────────────────────────────────────────────
+mqtt:
+  broker: !secret mqtt_host
+  port: 1883
+  username: !secret mqtt_user
+  password: !secret mqtt_pass
+  client_id: ${node_id}
+
+  will_message:
+    topic: miehome/voice/${node_id}/availability
+    payload: offline
+    retain: true
+
+  birth_message:
+    topic: miehome/voice/${node_id}/availability
+    payload: online
+    retain: true
+
+  on_connect:
+    - mqtt.publish:
+        topic: miehome/voice/${node_id}/config
+        payload: !lambda |-
+          return "{\"id\":\"${node_id}\",\"name\":\"${node_name}\",\"room\":\"${room}\",\"type\":\"voice_node\"}";
+        retain: true
+
+  # Listen for TTS playback commands from Pi
+  on_message:
+    - topic: miehome/voice/${node_id}/tts_play
+      then:
+        - lambda: |-
+            // Trigger speaker output — implemented via I2S DAC below
+            id(tts_text).publish_state(x);
+        - light.turn_on:
+            id: led_ring
+            red: 0%
+            green: 60%
+            blue: 100%
+            brightness: 60%
+        - delay: 3s
+        - light.turn_off: led_ring
+
+    - topic: miehome/voice/${node_id}/command
+      then:
+        - lambda: |-
+            if (x == "listen") id(listening_mode).publish_state(true);
+            if (x == "mute")   id(listening_mode).publish_state(false);
+
+# ── OTA ──────────────────────────────────────────────────────────────────────
+ota:
+  platform: esphome
+  password: !secret ota_password
+  on_begin:
+    - light.turn_on:
+        id: led_ring
+        red: 100%
+        green: 80%
+        blue: 0%
+        effect: "Pulse"
+
+api:
+  password: !secret api_password
+  reboot_timeout: 0s
+
+logger:
+  level: WARN
+
+# ── Microphone — INMP441 via I2S ─────────────────────────────────────────────
+i2s_audio:
+  - id: i2s_in
+    i2s_lrclk_pin: GPIO4            # WS pin on INMP441
+    i2s_bclk_pin: GPIO5             # SCK pin on INMP441
+
+  - id: i2s_out
+    i2s_lrclk_pin: GPIO16           # LRC pin on MAX98357A
+    i2s_bclk_pin: GPIO17            # BCLK pin on MAX98357A
+
+microphone:
+  - platform: i2s_audio
+    id: mic
+    i2s_audio_id: i2s_in
+    i2s_din_pin: GPIO6              # SD pin on INMP441
+    adc_type: external
+    pdm: false
+    bits_per_sample: 32bit
+    channel: left
+
+speaker:
+  - platform: i2s_audio
+    id: speaker_out
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO15            # DIN pin on MAX98357A
+    dac_type: external
+    mode: mono
+
+# ── Voice Assistant (wake word → STT pipeline) ───────────────────────────────
+voice_assistant:
+  id: va
+  microphone: mic
+  speaker: speaker_out
+
+  # Wake word runs on-device — no audio sent until triggered
+  on_wake_word_detected:
+    - light.turn_on:
+        id: led_ring
+        red: 0%
+        green: 0%
+        blue: 100%
+        brightness: 80%
+        effect: "Pulse"
+    - mqtt.publish:
+        topic: miehome/voice/${node_id}/wake
+        payload: !lambda |-
+          return "{\"node\":\"${node_id}\",\"room\":\"${room}\",\"ts\":" + to_string(millis()) + "}";
+
+  # Audio streamed to Pi — Whisper handles transcription
+  on_listening:
+    - light.turn_on:
+        id: led_ring
+        red: 0%
+        green: 0%
+        blue: 100%
+        brightness: 100%
+
+  on_stt_end:
+    then:
+      - mqtt.publish:
+          topic: miehome/voice/${node_id}/stt_result
+          payload: !lambda return "{\"text\":\"" + x + "\",\"room\":\"${room}\"}";
+      - light.turn_on:
+          id: led_ring
+          red: 0%
+          green: 100%
+          blue: 0%
+          brightness: 60%
+      - delay: 1s
+      - light.turn_off: led_ring
+
+  on_error:
+    - light.turn_on:
+        id: led_ring
+        red: 100%
+        green: 0%
+        blue: 0%
+        brightness: 80%
+    - delay: 2s
+    - light.turn_off: led_ring
+    - mqtt.publish:
+        topic: miehome/system/log
+        payload: !lambda |-
+          return "{\"device\":\"${node_id}\",\"error\":\"voice_assistant_error\"}";
+
+# ── LED Ring — WS2812B (3-5 LEDs) ────────────────────────────────────────────
+light:
+  - platform: neopixelbus
+    id: led_ring
+    type: GRB
+    variant: WS2812X
+    pin: GPIO48                     # Data pin — adjust to your wiring
+    num_leds: 4
+    name: "${node_name} LED Ring"
+    effects:
+      - pulse:
+          name: "Pulse"
+          transition_length: 500ms
+          update_interval: 500ms
+      - strobe:
+          name: "Strobe"
+          colors:
+            - state: true
+              duration: 200ms
+            - state: false
+              duration: 200ms
+
+# ── Sensors ──────────────────────────────────────────────────────────────────
+sensor:
+  - platform: wifi_signal
+    name: "${node_name} WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "${node_name} Uptime"
+    update_interval: 300s
+
+  - platform: internal_temperature
+    name: "${node_name} CPU Temp"
+    update_interval: 60s
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: return x > 80.0;
+            then:
+              - mqtt.publish:
+                  topic: miehome/system/log
+                  payload: !lambda |-
+                    return "{\"device\":\"${node_id}\",\"warn\":\"high_temp\",\"temp\":" + to_string(x) + "}";
+
+text_sensor:
+  - platform: template
+    id: tts_text
+    name: "${node_name} TTS Text"
+
+binary_sensor:
+  - platform: template
+    id: listening_mode
+    name: "${node_name} Listening"

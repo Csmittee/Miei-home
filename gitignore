@@ -1,0 +1,48 @@
+# Secrets — NEVER commit these
+firmware/esp32/secrets.yaml
+**/secrets.yaml
+**/.secrets.yaml
+*.env
+.env.*
+
+# ESPHome build artifacts
+firmware/esp32/.esphome/
+**/.esphome/
+firmware/esp32/build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Node (if dashboard uses npm)
+node_modules/
+dist/
+.parcel-cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Release binaries (built by CI — not stored in git)
+update-server/releases/
+
+# Admin panel credentials
+admin/.env
+admin/config.py
