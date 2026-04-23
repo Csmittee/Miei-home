@@ -64,12 +64,12 @@ It runs entirely on a Raspberry Pi 5 in your home — no data ever leaves unless
 ## Repository structure
 
 ```
-miehome/
+mieihome/
 │
 ├── firmware/
 │   ├── pi/
 │   │   ├── first_boot.sh              # Runs once on customer Pi — installs everything
-│   │   ├── miehome-firstboot.service  # Systemd unit that triggers first_boot.sh
+│   │   ├── mieihome-firstboot.service  # Systemd unit that triggers first_boot.sh
 │   │   ├── diagnostics_api.py         # Health API for dashboard + developer admin
 │   │   ├── whisper_service.py         # MQTT bridge for Whisper STT
 │   │   └── ota_server.py             # Local firmware server for ESP32 OTA
@@ -135,8 +135,8 @@ miehome/
 # 1. Flash Pi OS Lite 64-bit to SD card
 # 2. Copy first_boot.sh to the image
 sudo cp firmware/pi/first_boot.sh /mnt/boot/first_boot.sh
-sudo cp firmware/pi/miehome-firstboot.service \
-    /mnt/boot/miehome-firstboot.service
+sudo cp firmware/pi/mieihome-firstboot.service \
+    /mnt/boot/mieihome-firstboot.service
 
 # 3. Enable the service in the image
 # (done via systemctl enable in your image build script)
@@ -180,33 +180,33 @@ esphome run firmware/esp32/sonoff_switch.yaml
 All devices communicate via Mosquitto on the Pi. Full topic map:
 
 ```
-miehome/devices/{device_id}/command       →  Pi → device: ON / OFF / TOGGLE
-miehome/devices/{device_id}/status        ←  device → Pi: ON / OFF
-miehome/devices/{device_id}/config        ←  device announces itself on boot
-miehome/devices/{device_id}/availability  ←  online / offline (Last Will)
+mieihome/devices/{device_id}/command       →  Pi → device: ON / OFF / TOGGLE
+mieihome/devices/{device_id}/status        ←  device → Pi: ON / OFF
+mieihome/devices/{device_id}/config        ←  device announces itself on boot
+mieihome/devices/{device_id}/availability  ←  online / offline (Last Will)
 
-miehome/voice/{node_id}/wake              ←  wake word detected
-miehome/voice/{node_id}/stt_result        ←  transcribed text from Whisper
-miehome/voice/{node_id}/tts_play         →  Pi → node: speak this text
+mieihome/voice/{node_id}/wake              ←  wake word detected
+mieihome/voice/{node_id}/stt_result        ←  transcribed text from Whisper
+mieihome/voice/{node_id}/tts_play         →  Pi → node: speak this text
 
-miehome/camera/{cam_id}/motion            ←  Frigate motion event
-miehome/camera/{cam_id}/detection        ←  person / car / object JSON
-miehome/camera/{cam_id}/snapshot          ←  JPEG on event
+mieihome/camera/{cam_id}/motion            ←  Frigate motion event
+mieihome/camera/{cam_id}/detection        ←  person / car / object JSON
+mieihome/camera/{cam_id}/snapshot          ←  JPEG on event
 
-miehome/sensor/{sensor_id}/state          ←  ON / OFF (motion, leak)
-miehome/sensor/{sensor_id}/value          ←  numeric (soil moisture %)
-miehome/sensor/{sensor_id}/alert          ←  threshold breach (leak, dry soil)
+mieihome/sensor/{sensor_id}/state          ←  ON / OFF (motion, leak)
+mieihome/sensor/{sensor_id}/value          ←  numeric (soil moisture %)
+mieihome/sensor/{sensor_id}/alert          ←  threshold breach (leak, dry soil)
 
-miehome/system/heartbeat                  ←  Pi publishes every 60s
-miehome/system/ota/{device_id}           →  firmware update signal
-miehome/system/log                        ←  all devices log errors here
+mieihome/system/heartbeat                  ←  Pi publishes every 60s
+mieihome/system/ota/{device_id}           →  firmware update signal
+mieihome/system/log                        ←  all devices log errors here
 ```
 
 ---
 
 ## Diagnostics
 
-**Customer view** — available at `http://miehome.local/api/health`
+**Customer view** — available at `http://mieihome.local/api/health`
 - Device online/offline status
 - CPU temperature, disk usage, memory
 - 7-day event log
@@ -233,8 +233,8 @@ miehome/system/log                        ←  all devices log errors here
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourname/miehome.git
-cd miehome
+git clone https://github.com/yourname/mieihome.git
+cd mieihome
 
 # Set up ESPHome for flashing ESP32 devices
 pip install esphome
