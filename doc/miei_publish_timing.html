@@ -1,0 +1,118 @@
+
+<style>
+.s{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--color-text-tertiary);margin:1.4rem 0 .6rem}
+.gate{border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:1rem 1.25rem;margin-bottom:10px;background:var(--color-background-primary);display:flex;gap:14px;align-items:flex-start}
+.gate-num{font-size:22px;font-weight:500;min-width:32px;line-height:1}
+.gate-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.gate-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.gate-status{font-size:10px;font-weight:500;padding:2px 8px;border-radius:var(--border-radius-md);margin-top:6px;display:inline-block}
+.done{background:var(--color-background-success);color:var(--color-text-success)}
+.soon{background:var(--color-background-warning);color:var(--color-text-warning)}
+.later{background:var(--color-background-secondary);color:var(--color-text-tertiary)}
+.protect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:.8rem 0}
+.protect-card{border-radius:var(--border-radius-md);padding:.9rem 1rem;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.protect-title{font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:5px}
+.protect-desc{font-size:11px;color:var(--color-text-secondary);line-height:1.6}
+.reveal-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:.8rem 0}
+.reveal-box{border-radius:var(--border-radius-md);padding:.85rem 1rem;border:0.5px solid var(--color-border-tertiary);text-align:center}
+.reveal-label{font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.reveal-what{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.reveal-hide{font-size:11px;color:var(--color-text-tertiary);margin-top:4px;font-style:italic}
+.kuman-tease{border-radius:var(--border-radius-lg);border:2px solid #9FE1CB;background:#E1F5EE;padding:1rem 1.25rem;margin:1rem 0}
+</style>
+
+<div class="s">the 5 gates — publish only when all 5 are green</div>
+
+<div class="gate">
+  <div class="gate-num" style="color:#1D9E75">1</div>
+  <div>
+    <div class="gate-title">Working demo you can show in 60 seconds</div>
+    <div class="gate-desc">Not slides. Not a simulator only. A real hub, real camera, real relay switching on command. Someone unplugs the internet cable and everything still works. That 60 seconds is your patent — before any copycat can react, you've already demoed it to 50 people who remember it.</div>
+    <span class="gate-status soon">you're close — prototype nearly there</span>
+  </div>
+</div>
+
+<div class="gate">
+  <div class="gate-num" style="color:#1D9E75">2</div>
+  <div>
+    <div class="gate-title">One real paying customer on record</div>
+    <div class="gate-desc">Even ฿1 changes everything legally and commercially. A paid invoice dated before publication proves commercial use, which in Thailand and most jurisdictions is stronger protection than a pending patent. The clinic pilot is your gate 2.</div>
+    <span class="gate-status soon">land the pilot first</span>
+  </div>
+</div>
+
+<div class="gate">
+  <div class="gate-num" style="color:#888780">3</div>
+  <div>
+    <div class="gate-title">Brand and product name documented and dated</div>
+    <div class="gate-desc">MIEI HOME, Kuman, the proactive observation model — write them in a private dated document in your GitHub repo right now, today. Commit history is a timestamp that courts accept. This costs nothing and takes 10 minutes. Do it before this conversation ends.</div>
+    <span class="gate-status later">do this today — before anything else</span>
+  </div>
+</div>
+
+<div class="gate">
+  <div class="gate-num" style="color:#888780">4</div>
+  <div>
+    <div class="gate-title">Landing page live but quiet</div>
+    <div class="gate-desc">The page exists, indexed by Google, with your name on it and a dated publication timestamp. Not announced. Not shared. Just live. This establishes prior art online. A copycat who launches 3 months later and claims they invented it has to explain why your domain was registered and your page was indexed first.</div>
+    <span class="gate-status later">build it next — we do this together</span>
+  </div>
+</div>
+
+<div class="gate">
+  <div class="gate-num" style="color:#888780">5</div>
+  <div>
+    <div class="gate-title">Supply chain ready for first 10 orders</div>
+    <div class="gate-desc">You publish, it goes viral, 50 people want to buy. If you can't deliver within 4 weeks, the moment dies and competitors fill the gap you created. Have 10 units worth of components in hand before you post anything public. The storm is wasted if there's no boat ready.</div>
+    <span class="gate-status later">month 2–3</span>
+  </div>
+</div>
+
+<div class="s">what to reveal vs what to protect</div>
+<div class="reveal-strip">
+  <div class="reveal-box" style="background:#E1F5EE;border-color:#9FE1CB">
+    <div class="reveal-label" style="color:#0F6E56">Reveal early</div>
+    <div class="reveal-what" style="color:#085041">The two headlines. Offline works. Local camera. No subscription. The hardware stack (ESP32, Pi — it's open source anyway).</div>
+  </div>
+  <div class="reveal-box" style="background:#FAEEDA;border-color:#BA7517">
+    <div class="reveal-label" style="color:#633806">Reveal at launch</div>
+    <div class="reveal-what" style="color:#412402">The Kuman name and brand. The proactive observation concept. The demo video. The B2B PDPA angle. The price.</div>
+  </div>
+  <div class="reveal-box" style="background:#FAECE7;border-color:#D85A30">
+    <div class="reveal-label" style="color:#712B13">Keep private longest</div>
+    <div class="reveal-what" style="color:#4A1B0C">The Kuman doll concept. The local LLM pipeline. The fridge-to-Flash reorder system. The MIEI Switch hardware design. Your China manufacturing contact.</div>
+  </div>
+</div>
+
+<div class="s">protection that actually works at your stage</div>
+<div class="protect-grid">
+  <div class="protect-card">
+    <div class="protect-title">GitHub commit timestamps</div>
+    <div class="protect-desc">Every commit is dated and signed. Your repo history is prior art evidence. Push a CONCEPT.md today with the Kuman proactive AI description. Free. Instant. Legally meaningful.</div>
+  </div>
+  <div class="protect-card">
+    <div class="protect-title">Domain registration date</div>
+    <div class="protect-desc">Register mieihome.io and kuman.ai (or .io) in Cloudflare today. The registration timestamp is public record. Costs ~$12/year. Gives you prior claim on the brand name.</div>
+  </div>
+  <div class="protect-card">
+    <div class="protect-title">Thai trademark application</div>
+    <div class="protect-title" style="margin-top:0;color:var(--color-text-secondary);font-weight:400">Do this at gate 2 — after first sale</div>
+    <div class="protect-desc">Thai Department of Intellectual Property — MIEI HOME and Kuman as word marks. ~฿2,000 filing fee. 18-month process but date of filing is what counts, not approval date.</div>
+  </div>
+  <div class="protect-card">
+    <div class="protect-title">Utility model (not patent)</div>
+    <div class="protect-title" style="margin-top:0;color:var(--color-text-secondary);font-weight:400">Thai petty patent — faster and cheaper</div>
+    <div class="protect-desc">Thai "อนุสิทธิบัตร" protects the hardware configuration. Shorter term (6 years) but 3–6 month approval vs 3–5 years for full patent. File when the Kuman node design is locked.</div>
+  </div>
+</div>
+
+<div class="kuman-tease">
+  <div style="font-size:13px;font-weight:500;color:#085041;margin-bottom:6px">Kuman doll — the idea you protect the longest</div>
+  <div style="font-size:12px;color:#0F6E56;line-height:1.7">
+    ESP32-S3 inside a soft, huggable Thai-spirit doll. Warm ambient LED glow. Whispers your home's observations. A child sleeps with it. A parent trusts it. A grandmother understands it without any tech explanation — it's กุมารทอง, protecting the home. No competitor can copy the cultural soul of that idea. Your Chinese friend makes the body. You put the mind inside. This is the product that goes on the cover of Wired Asia. Keep it private until the hardware is proven and the doll prototype is in your hands.
+  </div>
+</div>
+
+<div style="border-radius:var(--border-radius-md);border-left:3px solid var(--color-border-tertiary);padding:.75rem 1rem;font-size:12px;color:var(--color-text-secondary);line-height:1.7;margin-top:1rem">
+  The real protection against copycats is not legal — it's speed and soul. A large company can copy your hardware in 6 months. They cannot copy the fact that you built it yourself, use it in your own home, understand every line of firmware, and named it after a Thai spirit your grandmother would recognise. That authenticity is the moat. Publish when the demo is real, the customer is paying, and the supply chain is ready. Not a day before, not a month after.
+</div>
