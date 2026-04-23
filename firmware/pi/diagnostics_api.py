@@ -15,9 +15,9 @@ import threading
 app = Flask(__name__)
 
 config = configparser.ConfigParser()
-config.read('/etc/miehome/mqtt.conf')
+config.read('/etc/mieihome/mqtt.conf')
 MQTT_HOST = config.get('DEFAULT', 'MQTT_HOST', fallback='localhost')
-MQTT_USER = config.get('DEFAULT', 'MQTT_USER', fallback='miehome')
+MQTT_USER = config.get('DEFAULT', 'MQTT_USER', fallback='mieihome')
 MQTT_PASS = config.get('DEFAULT', 'MQTT_PASS', fallback='')
 
 # In-memory device registry — populated by MQTT availability messages
@@ -27,8 +27,8 @@ registry_lock = threading.Lock()
 # ── MQTT listener (tracks online/offline state of all devices) ──────────────
 
 def on_connect(client, userdata, flags, rc):
-    client.subscribe("miehome/+/+/availability")
-    client.subscribe("miehome/system/heartbeat")
+    client.subscribe("mieihome/+/+/availability")
+    client.subscribe("mieihome/system/heartbeat")
 
 def on_message(client, userdata, msg):
     parts = msg.topic.split("/")
@@ -104,13 +104,13 @@ def get_uptime():
 
 def get_version():
     try:
-        with open("/etc/miehome/version.json") as f:
+        with open("/etc/mieihome/version.json") as f:
             return json.load(f)
     except:
         return {"version": "unknown"}
 
 def get_services_status():
-    services = ["mosquitto", "nginx", "miehome-whisper", "miehome-ota", "docker"]
+    services = ["mosquitto", "nginx", "mieihome-whisper", "mieihome-ota", "docker"]
     status = {}
     for svc in services:
         result = subprocess.run(
@@ -172,7 +172,7 @@ def send_report():
     Packages a health snapshot and posts it to the developer admin server.
     NO video. NO camera feeds. NO personal data.
     """
-    ADMIN_SERVER = os.environ.get("MIEHOME_ADMIN_URL", "https://admin.miehome.io")
+    ADMIN_SERVER = os.environ.get("mieihome_ADMIN_URL", "https://admin.mieihome.io")
     version_info = get_version()
     pi_serial = version_info.get("pi_serial", "unknown")
 
