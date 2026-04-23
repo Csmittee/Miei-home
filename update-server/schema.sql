@@ -1,7 +1,7 @@
 -- =============================================================================
 -- MIEI HOME — Cloudflare D1 Schema
 -- Run once to initialise the database:
---   wrangler d1 execute miehome-db --file=schema.sql
+--   wrangler d1 execute mieihome-db --file=schema.sql
 -- =============================================================================
 
 -- Firmware releases
@@ -52,7 +52,7 @@ VALUES (
   '1.0.0',
   'Initial release',
   '{
-    "pi":           { "version": "1.0.0", "url": "/firmware/pi/miehome-pi-1.0.0.tar.gz" },
+    "pi":           { "version": "1.0.0", "url": "/firmware/pi/mieihome-pi-1.0.0.tar.gz" },
     "esp32_switch": { "version": "1.0.0", "url": "/firmware/esp32/sonoff_switch-1.0.0.bin" },
     "esp32_voice":  { "version": "1.0.0", "url": "/firmware/esp32/voice_node-1.0.0.bin" },
     "esp32_sensor": { "version": "1.0.0", "url": "/firmware/esp32/sensor_pack-1.0.0.bin" }
